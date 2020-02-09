@@ -60,34 +60,43 @@ class Student:
 
     id: int
     name: str
+    _answers: Dict[int, Answer] #I am unsure about the exact types of stuff
 
     def __init__(self, id_: int, name: str) -> None:
         """ Initialize a student with name <name> and id <id>"""
-        # TODO: complete the body of this method
+        self.name = name
+        self.id = id_
+        self._answers = {}
 
     def __str__(self) -> str:
         """ Return the name of this student """
-        # TODO: complete the body of this method
+        return self.name
 
     def has_answer(self, question: Question) -> bool:
         """
         Return True iff this student has an answer for a question with the same
         id as <question> and that answer is a valid answer for <question>.
         """
-        # TODO: complete the body of this method
+        if question.id not in self._answers:
+            return False
+        else:
+            return self._answers[question.id].is_valid(question)
 
     def set_answer(self, question: Question, answer: Answer) -> None:
         """
         Record this student's answer <answer> to the question <question>.
         """
-        # TODO: complete the body of this method
+        self._answers[question.id] = answer
 
     def get_answer(self, question: Question) -> Optional[Answer]:
         """
         Return this student's answer to the question <question>. Return None if
         this student does not have an answer to <question>
         """
-        # TODO: complete the body of this method
+        if question.id not in self._answers:
+            return None
+        else:
+            return self._answers[question.id]
 
 
 class Course:
@@ -110,7 +119,10 @@ class Course:
         """
         Initialize a course with the name of <name>.
         """
-        # TODO: complete the body of this method
+        if name == "":
+            raise ValueError
+        self.name = name
+        self.students = []
 
     def enroll_students(self, students: List[Student]) -> None:
         """

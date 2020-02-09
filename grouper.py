@@ -49,8 +49,11 @@ def slice_list(lst: List[Any], n: int) -> List[List[Any]]:
     >>> slice_list(['a', 1, 6.0, False], 3) == [['a', 1, 6.0], [False]]
     True
     """
-    # TODO: complete the body of this function
-
+    sliced = []
+    for i in range(len(lst)//n):
+        sliced.append(lst[3*i:3*(i+1)])
+    sliced.append(lst[len(lst)-(len(lst)%n):])
+    return sliced
 
 def windows(lst: List[Any], n: int) -> List[List[Any]]:
     """
@@ -66,7 +69,10 @@ def windows(lst: List[Any], n: int) -> List[List[Any]]:
     >>> windows(['a', 1, 6.0, False], 3) == [['a', 1, 6.0], [1, 6.0, False]]
     True
     """
-    # TODO: complete the body of this function
+    sliced = []
+    for i in range(len(lst)-n):
+        sliced.append(lst[i:i+n])
+    return sliced
 
 
 class Grouper:
@@ -90,7 +96,7 @@ class Grouper:
         === Precondition ===
         group_size > 1
         """
-        # TODO: complete the body of this method
+        self.group_size = group_size
 
     def make_grouping(self, course: Course, survey: Survey) -> Grouping:
         """ Return a grouping for all students in <course> using the questions
@@ -332,8 +338,8 @@ class Grouping:
         # TODO: complete the body of this method
 
     def get_groups(self) -> List[Group]:
-        """ Return a list of all groups in this grouping. 
-        This list should be a shallow copy of the self._groups 
+        """ Return a list of all groups in this grouping.
+        This list should be a shallow copy of the self._groups
         attribute.
         """
         # TODO: complete the body of this method

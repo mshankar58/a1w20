@@ -10,7 +10,7 @@ Copying for purposes other than this use is expressly prohibited.
 All forms of distribution of this code, whether as given or with
 any changes, are expressly prohibited.
 
-Authors: Misha Schwartz, Mario Badr, Christine Murad, Diane Horton, 
+Authors: Misha Schwartz, Mario Badr, Christine Murad, Diane Horton,
 Sophia Huynh and Jaisie Sin
 
 All of the files in this directory and all subdirectories are:
@@ -54,8 +54,7 @@ class Criterion:
         raise NotImplementedError
 
 
-class HomogeneousCriterion:
-    # TODO: make this a child class of another class defined in this file
+class HomogeneousCriterion(Criterion):
     """
     A criterion used to evaluate the quality of a group based on the group
     members' answers for a given question.
@@ -81,11 +80,22 @@ class HomogeneousCriterion:
         === Precondition ===
         len(answers) > 0
         """
-        # TODO: complete the body of this method
+        count = 0
+        num = 0
+        if not answers[0].is_valid(question):
+            raise InvalidAnswerError
+        if len(answers) == 1:
+            return 1.0
+        for i in range(len(answers)-1):
+            for j in range(i+1, len(answers)):
+                if not answers[j].is_valid(question):
+                    raise InvalidAnswerError
+                num += question.get_similarity(answers[i], answers[j])
+                count += 1
+        return num/count
 
 
-class HeterogeneousCriterion:
-    # TODO: make this a child class of another class defined in this file
+class HeterogeneousCriterion(Criterion):
     """ A criterion used to evaluate the quality of a group based on the group
     members' answers for a given question.
 
@@ -110,11 +120,10 @@ class HeterogeneousCriterion:
         === Precondition ===
         len(answers) > 0
         """
-        # TODO: complete the body of this method
+        return (1 - HomogeneousCriterion.score_answers(question, answers))
 
 
-class LonelyMemberCriterion:
-    # TODO: make this a child class of another class defined in this file
+class LonelyMemberCriterion(Criterion):
     """ A criterion used to measure the quality of a group of students
     according to the group members' answers to a question. This criterion
     assumes that a group is of high quality if no member of the group gives
