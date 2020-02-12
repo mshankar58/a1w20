@@ -122,7 +122,7 @@ class MultipleChoiceQuestion(Question):
         An answer is valid if its content is one of the possible answers to this
         question.
         """
-        return answer in self.options
+        return answer.content in self.options
 
     def get_similarity(self, answer1: Answer, answer2: Answer) -> float:
         """
@@ -132,7 +132,7 @@ class MultipleChoiceQuestion(Question):
         === Precondition ===
         <answer1> and <answer2> are both valid answers to this question.
         """
-        if answer1 == answer2:
+        if answer1.content == answer2.content:
             return 1.0
         else:
             return 0.0
@@ -259,7 +259,7 @@ class YesNoQuestion(Question):
         === Precondition ===
         <answer1> and <answer2> are both valid answers to this question
         """
-        if answer1 == answer2:
+        if answer1.content == answer2.content:
             return 1.0
         else:
             return 0.0
@@ -278,6 +278,7 @@ class CheckboxQuestion(Question):
 
     id: int
     text: str
+    _options: List[str]
 
     def __init__(self, id_: int, text: str, options: List[str]) -> None:
         """
@@ -289,7 +290,7 @@ class CheckboxQuestion(Question):
         <options> contains at least two elements
         """
         Question.__init__(self, id_, text)
-        self.options = options
+        self._options = options
 
     def __str__(self) -> str:
         """
@@ -299,7 +300,7 @@ class CheckboxQuestion(Question):
         You can choose the precise format of this string.
         """
         s = self.text + "\nChoose one or more of the following: \n" \
-            + str(self.options)
+            + str(self._options)
         return s
 
     def validate_answer(self, answer: Answer) -> bool:
@@ -312,7 +313,7 @@ class CheckboxQuestion(Question):
         if not isinstance(answer.content, List) or answer.content == []:
             return False
         for item in answer.content:
-            if item not in self.options:
+            if item not in self._options:
                 return False
         return True
 
