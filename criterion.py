@@ -80,22 +80,26 @@ class HomogeneousCriterion(Criterion):
         === Precondition ===
         len(answers) > 0
         """
-        count = 0
-        num = 0
-        if not answers[0].is_valid(question):
-            raise InvalidAnswerError
         if len(answers) == 1:
-            return 1.0
-        for i in range(len(answers)-1):
-            for j in range(i+1, len(answers)):
-                if not answers[j].is_valid(question):
+            if answers[0].is_valid(question):
+                return 1.0
+            else:
+                raise InvalidAnswerError
+        sigma = 0.0
+        combos = 0.0
+        for i in range(len(answers) - 2):
+            for j in range(i + 1, len(answers) - 1):
+                first = answers[i]
+                second = answers[j]
+                if first.is_valid(question) and second.is_valid(question):
+                    sigma += question.get_similarity(first, second)
+                    combos += 1
+                else:
                     raise InvalidAnswerError
-                num += question.get_similarity(answers[i], answers[j])
-                count += 1
-        return num/count
+        return sigma/combos
 
 
-class HeterogeneousCriterion(Criterion):
+class HeterogeneousCriterion(HomogeneousCriterion):
     """ A criterion used to evaluate the quality of a group based on the group
     members' answers for a given question.
 
@@ -120,7 +124,7 @@ class HeterogeneousCriterion(Criterion):
         === Precondition ===
         len(answers) > 0
         """
-        return (1 - HomogeneousCriterion.score_answers(question, answers))
+        return 1 - self.score_answers(question, answers)
 
 
 class LonelyMemberCriterion(Criterion):
@@ -147,7 +151,18 @@ class LonelyMemberCriterion(Criterion):
         === Precondition ===
         len(answers) > 0
         """
-        # TODO: complete the body of this method
+        for i in range(len(answers) - 1):
+            unique = True
+            if not answers[i].is_valid(question):
+                raise InvalidAnswerError
+            for j in range(len(answers) - 1):
+                if not answers[j].is_valid(question):
+                    raise InvalidAnswerError
+                if i != j and answers[i].content == answers[j].content:
+                    unique = False
+            if unique:
+                return 0.0
+        return 1.0
 
 
 if __name__ == '__main__':
