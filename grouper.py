@@ -251,8 +251,8 @@ class Group:
     No two students in _members have the same id
     """
 
-    _members: [Student]
-    _id_list: [int]
+    _members: List[Student]
+    _id_list: List[int]
 
     def __init__(self, members: List[Student]) -> None:
         """ Initialize a group with members <members> """
