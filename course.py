@@ -60,7 +60,7 @@ class Student:
 
     id: int
     name: str
-    _answers: Dict[int, Answer] #I am unsure about the exact types of stuff
+    _answers: {int, Answer}
 
     def __init__(self, id_: int, name: str) -> None:
         """ Initialize a student with name <name> and id <id>"""
@@ -113,7 +113,8 @@ class Course:
     """
 
     name: str
-    students: List[Student]
+    students: [Student]
+    _id_list: [int]
 
     def __init__(self, name: str) -> None:
         """
@@ -123,6 +124,7 @@ class Course:
             raise ValueError
         self.name = name
         self.students = []
+        self._id_list = []
 
     def enroll_students(self, students: List[Student]) -> None:
         """
@@ -131,14 +133,31 @@ class Course:
         If adding any student would violate a representation invariant,
         do not add any of the students in <students> to the course.
         """
-        # TODO: complete the body of this method
+        violated = False
+        new_ids = []
+        for student in students:
+            new_ids.append(student.id)
+        for student in students:
+            if student.id in self._id_list or len(new_ids) > len(set(new_ids)):
+                violated = True
+                break
+        if not violated:
+            for student in students:
+                self.students.append(student)
+                self._id_list.append(student.id)
 
     def all_answered(self, survey: Survey) -> bool:
         """
         Return True iff all the students enrolled in this course have a valid
         answer for every question in <survey>.
         """
-        # TODO: complete the body of this method
+        questions = survey.get_questions()
+        valid = True
+        for question in questions:
+            for student in self.students:
+                if not question.validate_answer(student.get_answer(question)):
+                    valid = False
+        return valid
 
     def get_students(self) -> Tuple[Student, ...]:
         """
@@ -149,7 +168,8 @@ class Course:
 
         Hint: the sort_students function might be useful
         """
-        # TODO: complete the body of this method
+        out = sort_students(self.students, 'id')
+        return tuple(out)
 
 
 if __name__ == '__main__':

@@ -32,6 +32,9 @@ class InvalidAnswerError(Exception):
     """
     Error that should be raised when an answer is invalid for a given question.
     """
+    def __str__(self) -> str:
+        """Return a string representation of this error."""
+        return 'This answer is invalid.'
 
 
 class Criterion:
@@ -87,13 +90,13 @@ class HomogeneousCriterion(Criterion):
                 raise InvalidAnswerError
         sigma = 0.0
         combos = 0.0
-        for i in range(len(answers) - 2):
-            for j in range(i + 1, len(answers) - 1):
+        for i in range(len(answers) - 1):
+            for j in range(i + 1, len(answers)):
                 first = answers[i]
                 second = answers[j]
                 if first.is_valid(question) and second.is_valid(question):
                     sigma += question.get_similarity(first, second)
-                    combos += 1
+                    combos += 1.0
                 else:
                     raise InvalidAnswerError
         return sigma/combos
@@ -124,7 +127,7 @@ class HeterogeneousCriterion(HomogeneousCriterion):
         === Precondition ===
         len(answers) > 0
         """
-        return 1 - self.score_answers(question, answers)
+        return 1 - HomogeneousCriterion.score_answers(self, question, answers)
 
 
 class LonelyMemberCriterion(Criterion):
@@ -151,11 +154,11 @@ class LonelyMemberCriterion(Criterion):
         === Precondition ===
         len(answers) > 0
         """
-        for i in range(len(answers) - 1):
+        for i in range(len(answers)):
             unique = True
             if not answers[i].is_valid(question):
                 raise InvalidAnswerError
-            for j in range(len(answers) - 1):
+            for j in range(len(answers)):
                 if not answers[j].is_valid(question):
                     raise InvalidAnswerError
                 if i != j and answers[i].content == answers[j].content:
