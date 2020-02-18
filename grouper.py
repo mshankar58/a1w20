@@ -51,9 +51,13 @@ def slice_list(lst: List[Any], n: int) -> List[List[Any]]:
     True
     """
     sliced = []
-    for i in range(len(lst) // n):
-        sliced.append(lst[3 * i:3 * (i + 1)])
-    sliced.append(lst[len(lst) - (len(lst) % n):])
+    if n == 0:
+        sliced = []
+    elif n >= len(lst):
+        sliced.append(lst)
+    else:
+        for i in range(0, len(lst), n):
+            sliced.append(lst[i: i + n])
     return sliced
 
 
@@ -71,10 +75,15 @@ def windows(lst: List[Any], n: int) -> List[List[Any]]:
     >>> windows(['a', 1, 6.0, False], 3) == [['a', 1, 6.0], [1, 6.0, False]]
     True
     """
-    sliced = []
-    for i in range(len(lst) - n):
-        sliced.append(lst[i:i + n])
-    return sliced
+    windowed = []
+    if n == 0:
+        windowed = []
+    elif n >= len(lst):
+        windowed.append(lst)
+    else:
+        for i in range(len(lst) - n + 1):
+            windowed.append(lst[i: i + n])
+    return windowed
 
 
 class Grouper:
@@ -136,12 +145,14 @@ class AlphaGrouper(Grouper):
 
         Hint: the sort_students function might be useful
         """
-        students_sorted = course.sort_students(course.students, 'name')
+        students = course.students.copy()
+        students_sorted = sort_students(students, 'name')
         sliced = slice_list(students_sorted, self.group_size)
         grouping = Grouping()
         for lst in sliced:
             group = Group(lst)
             grouping.add_group(group)
+        return grouping
 
 
 class RandomGrouper(Grouper):
@@ -169,13 +180,14 @@ class RandomGrouper(Grouper):
         members if that is required to make sure all students in <course> are
         members of a group.
         """
-        students = course.students
+        students = course.students.copy()
         random.shuffle(students)
         sliced = slice_list(students, self.group_size)
         grouping = Grouping()
         for lst in sliced:
             group = Group(lst)
             grouping.add_group(group)
+        return grouping
 
 
 class GreedyGrouper(Grouper):
@@ -262,7 +274,8 @@ class WindowGrouper(Grouper):
         after repeating steps 1 and 2 above, put the remaining students into a
         new group.
         """
-        students = course.get_students()
+        students = list(course.get_students())
+        window_list = windows(students, 2)
 
 
 class Group:
