@@ -1,24 +1,18 @@
 """CSC148 Assignment 1
-
 === CSC148 Winter 2020 ===
 Department of Computer Science,
 University of Toronto
-
 This code is provided solely for the personal and private use of
 students taking the CSC148 course at the University of Toronto.
 Copying for purposes other than this use is expressly prohibited.
 All forms of distribution of this code, whether as given or with
 any changes, are expressly prohibited.
-
 Authors: Misha Schwartz, Mario Badr, Christine Murad, Diane Horton, Sophia Huynh
 and Jaisie Sin
-
 All of the files in this directory and all subdirectories are:
 Copyright (c) 2020 Misha Schwartz, Mario Badr, Christine Murad, Diane Horton,
 Sophia Huynh and Jaisie Sin
-
 === Module Description ===
-
 This file contains classes that define different algorithms for grouping
 students according to chosen criteria and the group members' answers to survey
 questions. This file also contain a classe that describes a group of students as
@@ -28,6 +22,7 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, List, Any
 from course import sort_students
+
 if TYPE_CHECKING:
     from survey import Survey
     from course import Course, Student
@@ -37,22 +32,23 @@ def slice_list(lst: List[Any], n: int) -> List[List[Any]]:
     """
     Return a list containing slices of <lst> in order. Each slice is a
     list of size <n> containing the next <n> elements in <lst>.
-
     The last slice may contain fewer than <n> elements in order to make sure
     that the returned list contains all elements in <lst>.
-
     === Precondition ===
     n <= len(lst)
-
     >>> slice_list([3, 4, 6, 2, 3], 2) == [[3, 4], [6, 2], [3]]
     True
     >>> slice_list(['a', 1, 6.0, False], 3) == [['a', 1, 6.0], [False]]
     True
     """
     sliced = []
-    for i in range(len(lst)//n):
-        sliced.append(lst[n*i:n*(i+1)])
-    sliced.append(lst[len(lst)-(len(lst) % n):])
+    if n == 0:
+        sliced = []
+    elif n >= len(lst):
+        sliced.append(lst)
+    else:
+        for i in range(0, len(lst), n):
+            sliced.append(lst[i: i + n])
     return sliced
 
 
@@ -61,29 +57,30 @@ def windows(lst: List[Any], n: int) -> List[List[Any]]:
     Return a list containing windows of <lst> in order. Each window is a list
     of size <n> containing the elements with index i through index i+<n> in the
     original list where i is the index of window in the returned list.
-
     === Precondition ===
     n <= len(lst)
-
     >>> windows([3, 4, 6, 2, 3], 2) == [[3, 4], [4, 6], [6, 2], [2, 3]]
     True
     >>> windows(['a', 1, 6.0, False], 3) == [['a', 1, 6.0], [1, 6.0, False]]
     True
     """
-    sliced = []
-    for i in range(len(lst)-n):
-        sliced.append(lst[i:i+n])
-    return sliced
+    windowed = []
+    if n == 0:
+        windowed = []
+    elif n >= len(lst):
+        windowed.append(lst)
+    else:
+        for i in range(len(lst) - n + 1):
+            windowed.append(lst[i: i + n])
+    return windowed
 
 
 class Grouper:
     """
     An abstract class representing a grouper used to create a grouping of
     students according to their answers to a survey.
-
     === Public Attributes ===
     group_size: the ideal number of students that should be in each group
-
     === Representation Invariants ===
     group_size > 1
     """
@@ -93,7 +90,6 @@ class Grouper:
     def __init__(self, group_size: int) -> None:
         """
         Initialize a grouper that creates groups of size <group_size>
-
         === Precondition ===
         group_size > 1
         """
@@ -110,10 +106,8 @@ class AlphaGrouper(Grouper):
     """
     A grouper that groups students in a given course according to the
     alphabetical order of their names.
-
     === Public Attributes ===
     group_size: the ideal number of students that should be in each group
-
     === Representation Invariants ===
     group_size > 1
     """
@@ -123,35 +117,31 @@ class AlphaGrouper(Grouper):
     def make_grouping(self, course: Course, survey: Survey) -> Grouping:
         """
         Return a grouping for all students in <course>.
-
         The first group should contain the students in <course> whose names come
         first when sorted alphabetically, the second group should contain the
         next students in that order, etc.
-
         All groups in this grouping should have exactly self.group_size members
         except for the last group which may have fewer than self.group_size
         members if that is required to make sure all students in <course> are
         members of a group.
-
         Hint: the sort_students function might be useful
         """
-        gping = Grouping()
-        ordered = sort_students(course.students, "name")
-        alpha_sections = slice_list(ordered, self.group_size)
-        for student_list in alpha_sections:
-            g = Group(student_list)
-            gping.add_group(g)
-        return gping
+        students = course.students.copy()
+        students_sorted = sort_students(students, 'name')
+        sliced = slice_list(students_sorted, self.group_size)
+        grouping = Grouping()
+        for lst in sliced:
+            group = Group(lst)
+            grouping.add_group(group)
+        return grouping
 
 
 class RandomGrouper(Grouper):
     """
     A grouper used to create a grouping of students by randomly assigning them
     to groups.
-
     === Public Attributes ===
     group_size: the ideal number of students that should be in each group
-
     === Representation Invariants ===
     group_size > 1
     """
@@ -161,29 +151,20 @@ class RandomGrouper(Grouper):
     def make_grouping(self, course: Course, survey: Survey) -> Grouping:
         """
         Return a grouping for all students in <course>.
-
         Students should be assigned to groups randomly.
-
         All groups in this grouping should have exactly self.group_size members
         except for one group which may have fewer than self.group_size
         members if that is required to make sure all students in <course> are
         members of a group.
         """
-        gping = Grouping()
-        students = list(course.get_students())  # TODO is this a legal copy???
-        container = []
-        list_of_groups = []
-        while len(students) > 0:
-            index = random.randint(0, len(students)-1)
-            container.append(students[index])
-            students.pop(index)
-            if len(container) == self.group_size:
-                list_of_groups.append(Group(container))
-                container = []
-        list_of_groups.append(Group(container))
-        for group in list_of_groups:
-            gping.add_group(group)
-        return gping
+        students = course.students.copy()
+        random.shuffle(students)
+        sliced = slice_list(students, self.group_size)
+        grouping = Grouping()
+        for lst in sliced:
+            group = Group(lst)
+            grouping.add_group(group)
+        return grouping
 
 
 class GreedyGrouper(Grouper):
@@ -191,10 +172,8 @@ class GreedyGrouper(Grouper):
     A grouper used to create a grouping of students according to their
     answers to a survey. This grouper uses a greedy algorithm to create
     groups.
-
     === Public Attributes ===
     group_size: the ideal number of students that should be in each group
-
     === Representation Invariants ===
     group_size > 1
     """
@@ -204,11 +183,9 @@ class GreedyGrouper(Grouper):
     def make_grouping(self, course: Course, survey: Survey) -> Grouping:
         """
         Return a grouping for all students in <course>.
-
         Starting with a tuple of all students in <course> obtained by calling
         the <course>.get_students() method, create groups of students using the
         following algorithm:
-
         1. select the first student in the tuple that hasn't already been put
            into a group and put this student in a new group.
         2. select the student in the tuple that hasn't already been put into a
@@ -218,10 +195,8 @@ class GreedyGrouper(Grouper):
         3. repeat step 2 until there are N students in the new group where N is
            equal to self.group_size.
         4. repeat steps 1-3 until all students have been placed in a group.
-
         In step 2 above, use the <survey>.score_students method to determine
         the score of each group of students.
-
         The final group created may have fewer than N members if that is
         required to make sure all students in <course> are members of a group.
         """
@@ -233,10 +208,8 @@ class WindowGrouper(Grouper):
     A grouper used to create a grouping of students according to their
     answers to a survey. This grouper uses a window search algorithm to create
     groups.
-
     === Public Attributes ===
     group_size: the ideal number of students that should be in each group
-
     === Representation Invariants ===
     group_size > 1
     """
@@ -246,11 +219,9 @@ class WindowGrouper(Grouper):
     def make_grouping(self, course: Course, survey: Survey) -> Grouping:
         """
         Return a grouping for all students in <course>.
-
         Starting with a tuple of all students in <course> obtained by calling
         the <course>.get_students() method, create groups of students using the
         following algorithm:
-
         1. Get the windows of the list of students who have not already been
            put in a group.
         2. For each window in order, calculate the current window's score as
@@ -259,38 +230,36 @@ class WindowGrouper(Grouper):
            make a group out of the students in current window and start again at
            step 1. If the current window is the last window, compare it to the
            first window instead.
-
         In step 2 above, use the <survey>.score_students to determine the score
         of each window (list of students).
-
         In step 1 and 2 above, use the windows function to get the windows of
         the list of students.
-
         If there are any remaining students who have not been put in a group
         after repeating steps 1 and 2 above, put the remaining students into a
         new group.
         """
-        # TODO: complete the body of this method
+        students = list(course.get_students())
+        window_list = windows(students, 2)
 
 
 class Group:
     """
     A group of one or more students
-
     === Private Attributes ===
     _members: a list of unique students in this group
-
     === Representation Invariants ===
     No two students in _members have the same id
     """
 
-    _members: List[Student]
+    _members: [Student]
+    _id_list: [int]
 
     def __init__(self, members: List[Student]) -> None:
         """ Initialize a group with members <members> """
-        self._members = []
-        for organism in members:
-            self._members.append(organism)
+        self._members = members
+        self._id_list = []
+        for member in members:
+            self._id_list.append(member.id)
 
     def __len__(self) -> int:
         """ Return the number of members in this group """
@@ -301,37 +270,36 @@ class Group:
         Return True iff this group contains a member with the same id
         as <member>.
         """
-        for student in self.get_members():
-            if member.id == student.id:
-                return True
-        return False
+        return member.id in self._id_list
 
     def __str__(self) -> str:
         """
         Return a string containing the names of all members in this group
         on a single line.
-
         You can choose the precise format of this string.
         """
-        s = ""
-        for being in self._members:
-            s = s + being.name + " "
-        return s
+        out = ""
+        for i in range(len(self._members)):
+            out += self._members[i].name
+            if i == len(self._members) - 1:
+                out += "."
+            else:
+                out += ", "
+        return out
 
     def get_members(self) -> List[Student]:
         """ Return a list of members in this group. This list should be a
         shallow copy of the self._members attribute.
         """
-        return self._members[:]
+        out = self._members.copy()
+        return out
 
 
 class Grouping:
     """
     A collection of groups
-
     === Private Attributes ===
     _groups: a list of Groups
-
     === Representation Invariants ===
     No group in _groups contains zero members
     No student appears in more than one group in _groups
@@ -352,32 +320,28 @@ class Grouping:
         Return a multi-line string that includes the names of all of the members
         of all of the groups in <self>. Each line should contain the names
         of members for a single group.
-
         You can choose the precise format of this string.
         """
-        s = """"""
-        for group in self._groups:
-            s = s + str(group) + "\n"
-            # TODO: look up how to concatenate triple quote string
-        return s
+        out = ""
+        for i in range(len(self._groups)):
+            out += str(self._groups[i])
+            if i != len(self._groups) - 1:
+                out += "\n"
+        return out
 
     def add_group(self, group: Group) -> bool:
         """
         Add <group> to this grouping and return True.
-
         Iff adding <group> to this grouping would violate a representation
         invariant don't add it and return False instead.
         """
-        if len(group.get_members()) < 1:
+        if len(group) == 0:
             return False
-        # TODO: code to uphold the RI where no student is in multiple groups
-        # the below clearly isn't working and returns the first group
-        # n times instead of n distinct groups
-
-#        for student in group.get_members():
-#            for group in self._groups:
-#                if student in group:
-#                    return False
+        members = group.get_members()
+        for student in members:
+            for grp in self._groups:
+                if student in grp:
+                    return False
         self._groups.append(group)
         return True
 
@@ -386,13 +350,15 @@ class Grouping:
         This list should be a shallow copy of the self._groups
         attribute.
         """
-        # TODO is this legal
-        return self._groups[:]
+        out = self._groups.copy()
+        return out
 
 
 if __name__ == '__main__':
     import python_ta
+
     python_ta.check_all(config={'extra-imports': ['typing',
                                                   'random',
                                                   'survey',
                                                   'course']})
+
