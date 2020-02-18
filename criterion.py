@@ -24,6 +24,7 @@ evaluate a group of answers to a survey question.
 """
 from __future__ import annotations
 from typing import TYPE_CHECKING, List
+
 if TYPE_CHECKING:
     from survey import Question, Answer
 
@@ -96,7 +97,7 @@ class HomogeneousCriterion(Criterion):
                     combos += 1
                 else:
                     raise InvalidAnswerError
-        return sigma/combos
+        return sigma / combos
 
 
 class HeterogeneousCriterion(HomogeneousCriterion):
@@ -167,5 +168,6 @@ class LonelyMemberCriterion(Criterion):
 
 if __name__ == '__main__':
     import python_ta
+
     python_ta.check_all(config={'extra-imports': ['typing',
                                                   'survey']})

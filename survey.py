@@ -397,18 +397,27 @@ class Survey:
         This new survey should use a HomogeneousCriterion as a default criterion
         and should use 1 as a default weight.
         """
-        # TODO: complete the body of this method
+        self._questions = {}
+        for q in questions:
+            self._questions[q.id] = q
+        self._criteria = {}
+        self._weights = {}
+        self._default_criterion = HomogeneousCriterion()
+        self._default_weight = 1
 
     def __len__(self) -> int:
         """ Return the number of questions in this survey """
-        # TODO: complete the body of this method
+        return len(self._questions)
 
     def __contains__(self, question: Question) -> bool:
         """
         Return True iff there is a question in this survey with the same
         id as <question>.
         """
-        # TODO: complete the body of this method
+        for key, q in self._questions:
+            if key == question.id:
+                return True
+        return False
 
     def __str__(self) -> str:
         """
@@ -417,11 +426,17 @@ class Survey:
 
         You can choose the precise format of this string.
         """
-        # TODO: complete the body of this method
+        s = ""
+        for q in self.get_questions():
+            s = s + str(q) + "\n"
+        return s
 
     def get_questions(self) -> List[Question]:
         """ Return a list of all questions in this survey """
-        # TODO: complete the body of this method
+        lst = []
+        for key in self._questions:
+            lst.append(self._questions[key])
+        return lst
 
     def _get_criterion(self, question: Question) -> Criterion:
         """
@@ -433,7 +448,9 @@ class Survey:
         === Precondition ===
         <question>.id occurs in this survey
         """
-        # TODO: complete the body of this method
+        if question.id in self._criteria:
+            return self._criteria[question.id]
+        return self._default_criterion
 
     def _get_weight(self, question: Question) -> int:
         """
@@ -445,7 +462,9 @@ class Survey:
         === Precondition ===
         <question>.id occurs in this survey
         """
-        # TODO: complete the body of this method
+        if question.id in self._weights:
+            return self._weights[question.id]
+        return self._default_weight
 
     def set_weight(self, weight: int, question: Question) -> bool:
         """
@@ -454,7 +473,9 @@ class Survey:
         If <question>.id does not occur in this survey, do not set the <weight>
         and return False instead.
         """
-        # TODO: complete the body of this method
+        if question not in self:
+            return False
+        self._weights[question.id] = weight
 
     def set_criterion(self, criterion: Criterion, question: Question) -> bool:
         """
@@ -464,7 +485,10 @@ class Survey:
         If <question>.id does not occur in this survey, do not set the <weight>
         and return False instead.
         """
-        # TODO: complete the body of this method
+        if question in self:
+            self._criteria[question.id] = criterion
+            return True
+        return False
 
     def score_students(self, students: List[Student]) -> float:
         """

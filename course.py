@@ -23,7 +23,8 @@ This file contains classes that describe a university course and the students
 who are enrolled in these courses.
 """
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Tuple, Optional
+from typing import TYPE_CHECKING, List, Tuple, Optional, Dict
+
 if TYPE_CHECKING:
     from survey import Answer, Survey, Question
 
@@ -60,13 +61,16 @@ class Student:
 
     id: int
     name: str
-    _answers: Dict[int, Answer] #I am unsure about the exact types of stuff
+    _answers: Dict[int, Answer]  # I am unsure about the exact types of stuff
 
     def __init__(self, id_: int, name: str) -> None:
         """ Initialize a student with name <name> and id <id>"""
         self.name = name
         self.id = id_
         self._answers = {}
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Student) and self.id == other.id
 
     def __str__(self) -> str:
         """ Return the name of this student """
@@ -131,14 +135,22 @@ class Course:
         If adding any student would violate a representation invariant,
         do not add any of the students in <students> to the course.
         """
-        # TODO: complete the body of this method
+        for student in students:
+            if student.name == "":
+                return None
+        for student in students:
+            self.students.append(student)
 
     def all_answered(self, survey: Survey) -> bool:
         """
         Return True iff all the students enrolled in this course have a valid
         answer for every question in <survey>.
         """
-        # TODO: complete the body of this method
+        for student in self.students:
+            for question in survey.get_questions():
+                if not student.has_answer(question):
+                    return False
+        return True
 
     def get_students(self) -> Tuple[Student, ...]:
         """
@@ -149,7 +161,11 @@ class Course:
 
         Hint: the sort_students function might be useful
         """
-        # TODO: complete the body of this method
+        lst = sort_students(self.students, "id")
+        t = ()
+        for item in lst:
+            t = t + (item,)
+        return t
 
 
 if __name__ == '__main__':

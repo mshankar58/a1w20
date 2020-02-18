@@ -51,9 +51,10 @@ def slice_list(lst: List[Any], n: int) -> List[List[Any]]:
     """
     sliced = []
     for i in range(len(lst)//n):
-        sliced.append(lst[3*i:3*(i+1)])
-    sliced.append(lst[len(lst)-(len(lst)%n):])
+        sliced.append(lst[n*i:n*(i+1)])
+    sliced.append(lst[len(lst)-(len(lst) % n):])
     return sliced
+
 
 def windows(lst: List[Any], n: int) -> List[List[Any]]:
     """
@@ -134,7 +135,13 @@ class AlphaGrouper(Grouper):
 
         Hint: the sort_students function might be useful
         """
-        # TODO: complete the body of this method
+        gping = Grouping()
+        ordered = sort_students(course.students, "name")
+        alpha_sections = slice_list(ordered, self.group_size)
+        for student_list in alpha_sections:
+            g = Group(student_list)
+            gping.add_group(g)
+        return gping
 
 
 class RandomGrouper(Grouper):
@@ -162,7 +169,21 @@ class RandomGrouper(Grouper):
         members if that is required to make sure all students in <course> are
         members of a group.
         """
-        # TODO: complete the body of this method
+        gping = Grouping()
+        students = list(course.get_students())  # TODO is this a legal copy???
+        container = []
+        list_of_groups = []
+        while len(students) > 0:
+            index = random.randint(0, len(students)-1)
+            container.append(students[index])
+            students.pop(index)
+            if len(container) == self.group_size:
+                list_of_groups.append(Group(container))
+                container = []
+        list_of_groups.append(Group(container))
+        for group in list_of_groups:
+            gping.add_group(group)
+        return gping
 
 
 class GreedyGrouper(Grouper):
@@ -267,18 +288,23 @@ class Group:
 
     def __init__(self, members: List[Student]) -> None:
         """ Initialize a group with members <members> """
-        # TODO: complete the body of this method
+        self._members = []
+        for organism in members:
+            self._members.append(organism)
 
     def __len__(self) -> int:
         """ Return the number of members in this group """
-        # TODO: complete the body of this method
+        return len(self._members)
 
     def __contains__(self, member: Student) -> bool:
         """
         Return True iff this group contains a member with the same id
         as <member>.
         """
-        # TODO: complete the body of this method
+        for student in self.get_members():
+            if member.id == student.id:
+                return True
+        return False
 
     def __str__(self) -> str:
         """
@@ -287,13 +313,16 @@ class Group:
 
         You can choose the precise format of this string.
         """
-        # TODO: complete the body of this method
+        s = ""
+        for being in self._members:
+            s = s + being.name + " "
+        return s
 
     def get_members(self) -> List[Student]:
         """ Return a list of members in this group. This list should be a
         shallow copy of the self._members attribute.
         """
-        # TODO: complete the body of this method
+        return self._members[:]
 
 
 class Grouping:
@@ -312,11 +341,11 @@ class Grouping:
 
     def __init__(self) -> None:
         """ Initialize a Grouping that contains zero groups """
-        # TODO: complete the body of this method
+        self._groups = []
 
     def __len__(self) -> int:
         """ Return the number of groups in this grouping """
-        # TODO: complete the body of this method
+        return len(self._groups)
 
     def __str__(self) -> str:
         """
@@ -326,7 +355,11 @@ class Grouping:
 
         You can choose the precise format of this string.
         """
-        # TODO: complete the body of this method
+        s = """"""
+        for group in self._groups:
+            s = s + str(group) + "\n"
+            # TODO: look up how to concatenate triple quote string
+        return s
 
     def add_group(self, group: Group) -> bool:
         """
@@ -335,14 +368,26 @@ class Grouping:
         Iff adding <group> to this grouping would violate a representation
         invariant don't add it and return False instead.
         """
-        # TODO: complete the body of this method
+        if len(group.get_members()) < 1:
+            return False
+        # TODO: code to uphold the RI where no student is in multiple groups
+        # the below clearly isn't working and returns the first group
+        # n times instead of n distinct groups
+
+#        for student in group.get_members():
+#            for group in self._groups:
+#                if student in group:
+#                    return False
+        self._groups.append(group)
+        return True
 
     def get_groups(self) -> List[Group]:
         """ Return a list of all groups in this grouping.
         This list should be a shallow copy of the self._groups
         attribute.
         """
-        # TODO: complete the body of this method
+        # TODO is this legal
+        return self._groups[:]
 
 
 if __name__ == '__main__':
