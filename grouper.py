@@ -21,11 +21,9 @@ well as a grouping (a group of groups).
 from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, List, Any
-from course import sort_students
-
+from course import Course, Student, sort_students
 if TYPE_CHECKING:
     from survey import Survey
-    from course import Course, Student
 
 
 def slice_list(lst: List[Any], n: int) -> List[List[Any]]:
@@ -200,7 +198,32 @@ class GreedyGrouper(Grouper):
         The final group created may have fewer than N members if that is
         required to make sure all students in <course> are members of a group.
         """
-        # TODO: complete the body of this method
+        students = list(course.get_students())
+        grouping = Grouping()
+        while len(students) != 0:
+            to_add = [students[0]]
+            students.pop(0)
+            self._grouper_helper(to_add, students, survey)
+            group = Group(to_add)
+            grouping.add_group(group)
+        return grouping
+
+    def _grouper_helper(self, to_add: List, students: List, survey: Survey)\
+            -> None:
+        while len(to_add) < self.group_size and len(students) != 0:
+            current_score = survey.score_students(to_add)
+            new = survey.score_students(to_add + [students[0]])
+            max_delta = new - current_score
+            best_student = students[0]
+            for student in students:
+                comparator = to_add + [student]
+                new_score = survey.score_students(comparator)
+                delta = new_score - current_score
+                if delta > max_delta:
+                    max_delta = delta
+                    best_student = student
+            to_add.append(best_student)
+            students.remove(best_student)
 
 
 class WindowGrouper(Grouper):
@@ -239,7 +262,30 @@ class WindowGrouper(Grouper):
         new group.
         """
         students = list(course.get_students())
-        window_list = windows(students, 2)
+        grouping = Grouping()
+        while len(students) != 0:
+            window = windows(students, self.group_size)
+            if len(window) == 1:
+                group = Group(window[0])
+                grouping.add_group(group)
+                for student in window[0]:
+                    students.remove(student)
+            for index in range(len(window)):
+                first = window[index]
+                if index == len(window) - 1:
+                    second = window[0]
+                else:
+                    second = window[index + 1]
+                first_score = survey.score_students(first)
+                second_score = survey.score_students(second)
+                if first_score >= second_score:
+                    group = Group(first)
+                    grouping.add_group(group)
+                    for student in first:
+                        students.remove(student)
+                    break
+
+        return grouping
 
 
 class Group:
@@ -251,8 +297,8 @@ class Group:
     No two students in _members have the same id
     """
 
-    _members: List[Student]
-    _id_list: List[int]
+    _members: [Student]
+    _id_list: [int]
 
     def __init__(self, members: List[Student]) -> None:
         """ Initialize a group with members <members> """
@@ -361,4 +407,3 @@ if __name__ == '__main__':
                                                   'random',
                                                   'survey',
                                                   'course']})
-

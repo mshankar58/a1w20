@@ -74,13 +74,15 @@ class MultipleChoiceQuestion(Question):
     === Public Attributes ===
     id: the id of this question
     text: the text of this question
+    === Private Attributes ===
+    _options: a list of all possible answer options
     === Representation Invariants ===
     text is not the empty string
     """
 
     id: int
     text: str
-    options: List[str]
+    _options: List[str]
 
     def __init__(self, id_: int, text: str, options: List[str]) -> None:
         """
@@ -91,7 +93,7 @@ class MultipleChoiceQuestion(Question):
         <options> contains at least two elements
         """
         Question.__init__(self, id_, text)
-        self.options = options
+        self._options = options
 
     def __str__(self) -> str:
         """
@@ -99,7 +101,7 @@ class MultipleChoiceQuestion(Question):
         text of the question and a description of the possible answers.
         You can choose the precise format of this string.
         """
-        s = self.text + "\nPick the best answer:\n" + str(self.options)
+        s = self.text + "\nPick the best answer:\n" + str(self._options)
         return s
 
     def validate_answer(self, answer: Answer) -> bool:
@@ -108,7 +110,7 @@ class MultipleChoiceQuestion(Question):
         An answer is valid if its content is one of the possible answers to this
         question.
         """
-        return answer.content in self.options
+        return answer.content in self._options
 
     def get_similarity(self, answer1: Answer, answer2: Answer) -> float:
         """
@@ -129,6 +131,9 @@ class NumericQuestion(Question):
     === Public Attributes ===
     id: the id of this question
     text: the text of this question
+    === Private Attributes ===
+    _min: minimum possible value
+    _max: maximum possible value
     === Representation Invariants ===
     text is not the empty string
     """
@@ -245,6 +250,8 @@ class CheckboxQuestion(Question):
     === Public Attributes ===
     id: the id of this question
     text: the text of this question
+    === Private Attributes ===
+    _options: a list of possible answers
     === Representation Invariants ===
     text is not the empty string
     """
@@ -307,7 +314,8 @@ class CheckboxQuestion(Question):
         for item in answer2.content:
             if item in answer1.content:
                 count += 1
-        unique = len(answer2.content) + len(answer1.content) - count
+        total = answer1.content + answer2.content
+        unique = len(set(total))
         if unique == 0:
             return 0.0
         else:
@@ -437,7 +445,7 @@ class Survey:
         and return False instead.
         """
         if question.id in self._questions:
-            self._weights[question.id] = weight
+            self._weights[question.id] = abs(weight)
             return True
         else:
             return False
@@ -475,20 +483,20 @@ class Survey:
         if len(self._questions) == 0:
             return 0.0
         weighted_sum = 0.0
-        for i in self._questions:
-            question = self._questions[i]
-            criterion = self._get_criterion(question)
-            weight = self._get_weight(question)
-            answers = []
-            for student in students:
-                answer = student.get_answer(question)
-                if answer.is_valid(question):
+        try:
+            for i in self._questions:
+                question = self._questions[i]
+                criterion = self._get_criterion(question)
+                weight = self._get_weight(question)
+                answers = []
+                for student in students:
+                    answer = student.get_answer(question)
                     answers.append(answer)
-                else:
-                    return 0.0
-            score = criterion.score_answers(question, answers)
-            weighted_sum += (score * weight)
-        return weighted_sum / len(self._questions)
+                score = criterion.score_answers(question, answers)
+                weighted_sum += (score * weight)
+            return weighted_sum / len(self._questions)
+        except InvalidAnswerError:
+            return 0.0
 
     def score_grouping(self, grouping: Grouping) -> float:
         """ Return a score for <grouping> calculated based on the answers of
@@ -512,6 +520,8 @@ class Survey:
             students = group.get_members()
             score += self.score_students(students)
             num += 1.0
+        if num == 0.0:
+            return 0.0
         return score / num
 
 

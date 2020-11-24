@@ -86,7 +86,10 @@ class HomogeneousCriterion(Criterion):
                     combos += 1.0
                 else:
                     raise InvalidAnswerError
-        return sigma/combos
+        if combos == 0.0:
+            return 0.0
+        else:
+            return sigma/combos
 
 
 class HeterogeneousCriterion(HomogeneousCriterion):
@@ -109,7 +112,7 @@ class HeterogeneousCriterion(HomogeneousCriterion):
         === Precondition ===
         len(answers) > 0
         """
-        return 1 - HomogeneousCriterion.score_answers(self, question, answers)
+        return 1.0 - HomogeneousCriterion.score_answers(self, question, answers)
 
 
 class LonelyMemberCriterion(Criterion):
